@@ -20,14 +20,14 @@
       # To update: change version, then set all hashes to "" and build.
       # The error messages will contain the correct hashes.
       # Release tags: https://github.com/coder/code-server/releases
-      version = "4.117.0";
+      version = "4.118.0";
 
       platformInfo = {
-        "x86_64-linux"   = { os = "linux"; arch = "amd64";  hash = "sha256-VhZlDMZaggRut6skt5TaZjKjKS0H3waQiADXVUSWI5E="; };
-        "aarch64-linux"  = { os = "linux"; arch = "arm64";  hash = "sha256-VhZlDMZaggRut6skt5TaZjKjKS0H3waQiADXVUSWI5E="; };
-        "armv7l-linux"   = { os = "linux"; arch = "armv7l"; hash = "sha256-EWm5fhCAwXOnCqY1DL4QbUwzTogrQHf/U1ajK/2SSiw="; };
-        "x86_64-darwin"  = { os = "macos"; arch = "amd64";  hash = "sha256-EWm5fhCAwXOnCqY1DL4QbUwzTogrQHf/U1ajK/2SSiw="; };
-        "aarch64-darwin" = { os = "macos"; arch = "arm64";  hash = "sha256-RznzM5iLrcvM6pBQiKGJDVFJIuZD0ZSUrTCB1dWgJso="; };
+        "x86_64-linux"   = { os = "linux"; arch = "amd64";  hash = "sha256-q03uAcrMIOtQDJZmBHfYunVfafQCzJy6s6hJa0aQ8v0="; };
+        "aarch64-linux"  = { os = "linux"; arch = "arm64";  hash = "sha256-q03uAcrMIOtQDJZmBHfYunVfafQCzJy6s6hJa0aQ8v0="; };
+        "armv7l-linux"   = { os = "linux"; arch = "armv7l"; hash = "sha256-MeVwHLDVU/QK6rmoYD6LzJAQ5bM51ABALg0Iuq9ZSZY="; };
+        "x86_64-darwin"  = { os = "macos"; arch = "amd64";  hash = "sha256-MeVwHLDVU/QK6rmoYD6LzJAQ5bM51ABALg0Iuq9ZSZY="; };
+        "aarch64-darwin" = { os = "macos"; arch = "arm64";  hash = "sha256-2aijG6EKM2YNmXL5chmxXSQo0o7+zF//yAAHOZDrQH0="; };
       };
 
       info = platformInfo.${system};
