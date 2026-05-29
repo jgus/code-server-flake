@@ -1,11 +1,11 @@
 # Auto-managed by `nix run .#update-version`. Manual edits will be overwritten by the next bump.
 {
-  version = "4.121.0";
+  version = "4.122.0";
   hashes = {
-    "x86_64-linux" = "sha256-OGCJPxU3bl+YRJLFyS6HxRl11n45AkEPQigj2fYOBq8=";
-    "aarch64-linux" = "sha256-3lEBo8H4azhTQx1pINz02qyoefYT3skTlJYJnjG6pWk=";
-    "armv7l-linux" = "sha256-XJI6/vG0Aldio05Ls1HNegM4Xgr2vk5ArzIGX5xHakk=";
-    "x86_64-darwin" = "sha256-yXoqq9K71DRVIgE15WwcUp9+1S66s9L5FCufvFTZx2M=";
-    "aarch64-darwin" = "sha256-ae97FvPT9EFdB1BF5i1xVdJAMDzEdqCLpK3xN0rMsjY=";
+    "x86_64-linux" = "sha256-mUV4xcvEj8ghxxx7N2BP3H8AcgcAwfkxHZ3FYq11NBI=";
+    "aarch64-linux" = "sha256-adGHzbveQoxlgkGTJoWO+ROKaUCQyHlArlzxMdx5Nhw=";
+    "armv7l-linux" = "sha256-oUQO1PRqVN35V9uATcD+/gixYvsO+vux1+S50Mdgqyg=";
+    "x86_64-darwin" = "sha256-HJxTi5lXz1oqyxDLSIiHmkl1K7Q29gwo80Ph7UQ4p3U=";
+    "aarch64-darwin" = "sha256-qhSMk0+gQzKY2J8YETzybYXDztUumQWv7tZCegH5XgY=";
   };
 }
