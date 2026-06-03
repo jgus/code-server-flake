@@ -4,9 +4,14 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    flake-lib = {
+      url = "github:jgus/flake-lib/v1";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, flake-utils, flake-lib }:
     flake-utils.lib.eachSystem
       [ "x86_64-linux" "aarch64-linux" "armv7l-linux" "x86_64-darwin" "aarch64-darwin" ]
       (system:
@@ -14,6 +19,7 @@
         pin = import ./pin.nix;
         inherit (pin) version hashes;
         pkgs = import nixpkgs { inherit system; };
+        source = { type = "github"; owner = "coder"; repo = "code-server"; };
 
         # nix-system -> upstream tarball os-arch suffix.
         platformSuffix = {
@@ -62,19 +68,21 @@
           };
         };
 
-        update-version = pkgs.writeShellApplication {
-          name = "update-version";
-          text = ''exec ${./update-version.sh} "$@"'';
-        };
-        update-branches = pkgs.writeShellApplication {
-          name = "update-branches";
-          text = ''exec ${./update-branches.sh} "$@"'';
-        };
       in
       {
         packages = {
-          inherit code-server update-version update-branches;
+          inherit code-server;
           default = code-server;
+          # Bespoke build (per-platform prebuilt tarball) + bespoke update-version (prefetches the
+          # platform matrix into a keyed hash table); only the per-version-branch orchestrator is shared.
+          update-version = pkgs.writeShellApplication {
+            name = "update-version";
+            text = ''exec ${./update-version.sh} "$@"'';
+          };
+          update-branches = flake-lib.lib.mkUpdateBranches {
+            inherit pkgs source;
+            pinSchema = "version-only";
+          };
         };
       });
 }
