@@ -14,10 +14,13 @@
   outputs = { self, nixpkgs, flake-utils, flake-lib }:
     let
       pin = import ./pin.nix;
-      inherit (pin) version hashes;
+      inherit (pin) version;
+      # The orchestrator's version-only placeholder pin carries no `hashes` (update-version fills it),
+      # so default to {} — the flake must still evaluate enough to expose update-version/update-branches.
+      hashes = pin.hashes or { };
       source = { type = "github"; owner = "coder"; repo = "code-server"; };
 
-      # nix-system -> upstream tarball os-arch suffix.
+      # nix-system -> upstream tarball os-arch suffix. Static union of every target code-server has shipped.
       platformSuffix = {
         "x86_64-linux" = "linux-amd64";
         "aarch64-linux" = "linux-arm64";
@@ -26,10 +29,10 @@
         "aarch64-darwin" = "macos-arm64";
       };
     in
-    # Supported systems come from the pin's hash table, not a fixed list: upstream drops/adds prebuilt
-    # targets over time (e.g. linux-armv7l was dropped in 4.123.0), so each version exposes exactly the
-    # platforms it actually shipped, and update-version records only those.
-    flake-utils.lib.eachSystem (builtins.attrNames hashes)
+    # Iterate the static platform union so update-version/update-branches always exist (the orchestrator
+    # calls them against a hash-less placeholder pin). `code-server` itself is exposed only for the
+    # platforms the pinned release actually shipped — upstream drops/adds targets (armv7l gone in 4.123.0).
+    flake-utils.lib.eachSystem (builtins.attrNames platformSuffix)
       (system:
       let
         pkgs = import nixpkgs { inherit system; };
@@ -37,7 +40,7 @@
 
         src = pkgs.fetchurl {
           url = "https://github.com/coder/code-server/releases/download/v${version}/code-server-${version}-${suffix}.tar.gz";
-          hash = hashes.${system};
+          hash = hashes.${system} or "";
         };
 
         code-server = pkgs.stdenv.mkDerivation {
@@ -73,19 +76,23 @@
 
       in
       {
-        packages = {
-          inherit code-server;
-          default = code-server;
-          # Bespoke build (per-platform prebuilt tarball) + bespoke update-version (prefetches the
-          # platform matrix into a keyed hash table); only the per-version-branch orchestrator is shared.
-          update-version = pkgs.writeShellApplication {
-            name = "update-version";
-            text = ''exec ${./update-version.sh} "$@"'';
+        # code-server only for platforms present in the pin; scripts always (the orchestrator needs them).
+        packages =
+          pkgs.lib.optionalAttrs (hashes ? ${system}) {
+            inherit code-server;
+            default = code-server;
+          }
+          // {
+            # Bespoke build (per-platform prebuilt tarball) + bespoke update-version (prefetches the
+            # platform matrix into a keyed hash table); only the per-version-branch orchestrator is shared.
+            update-version = pkgs.writeShellApplication {
+              name = "update-version";
+              text = ''exec ${./update-version.sh} "$@"'';
+            };
+            update-branches = flake-lib.lib.mkUpdateBranches {
+              inherit pkgs source;
+              pinSchema = "version-only";
+            };
           };
-          update-branches = flake-lib.lib.mkUpdateBranches {
-            inherit pkgs source;
-            pinSchema = "version-only";
-          };
-        };
       });
 }
