@@ -12,24 +12,27 @@
   };
 
   outputs = { self, nixpkgs, flake-utils, flake-lib }:
-    flake-utils.lib.eachSystem
-      [ "x86_64-linux" "aarch64-linux" "armv7l-linux" "x86_64-darwin" "aarch64-darwin" ]
+    let
+      pin = import ./pin.nix;
+      inherit (pin) version hashes;
+      source = { type = "github"; owner = "coder"; repo = "code-server"; };
+
+      # nix-system -> upstream tarball os-arch suffix.
+      platformSuffix = {
+        "x86_64-linux" = "linux-amd64";
+        "aarch64-linux" = "linux-arm64";
+        "armv7l-linux" = "linux-armv7l";
+        "x86_64-darwin" = "macos-amd64";
+        "aarch64-darwin" = "macos-arm64";
+      };
+    in
+    # Supported systems come from the pin's hash table, not a fixed list: upstream drops/adds prebuilt
+    # targets over time (e.g. linux-armv7l was dropped in 4.123.0), so each version exposes exactly the
+    # platforms it actually shipped, and update-version records only those.
+    flake-utils.lib.eachSystem (builtins.attrNames hashes)
       (system:
       let
-        pin = import ./pin.nix;
-        inherit (pin) version hashes;
         pkgs = import nixpkgs { inherit system; };
-        source = { type = "github"; owner = "coder"; repo = "code-server"; };
-
-        # nix-system -> upstream tarball os-arch suffix.
-        platformSuffix = {
-          "x86_64-linux" = "linux-amd64";
-          "aarch64-linux" = "linux-arm64";
-          "armv7l-linux" = "linux-armv7l";
-          "x86_64-darwin" = "macos-amd64";
-          "aarch64-darwin" = "macos-arm64";
-        };
-
         suffix = platformSuffix.${system};
 
         src = pkgs.fetchurl {
@@ -64,7 +67,7 @@
             description = "VS Code in the browser";
             homepage = "https://github.com/coder/code-server";
             mainProgram = "code-server";
-            platforms = builtins.attrNames platformSuffix;
+            platforms = builtins.attrNames hashes;
           };
         };
 
