@@ -46,9 +46,19 @@ for nix_system in "${!platforms[@]}"; do
   suffix="${platforms[$nix_system]}"
   url="https://github.com/${repo_owner}/${repo_name}/releases/download/v${new_version}/code-server-${new_version}-${suffix}.tar.gz"
   echo "Prefetching ${nix_system} (${suffix})..."
-  hash=$(nix store prefetch-file --json --hash-type sha256 "${url}" | jq -r '.hash')
-  new_hashes[$nix_system]="${hash}"
+  # Upstream drops/adds prebuilt targets over time (e.g. linux-armv7l gone as of 4.123.0). A missing
+  # asset (404) means this release doesn't ship that platform — skip it rather than failing the bump.
+  if out=$(nix store prefetch-file --json --hash-type sha256 "${url}" 2>/dev/null); then
+    new_hashes[$nix_system]=$(jq -r '.hash' <<<"${out}")
+  else
+    echo "  no ${suffix} asset for ${new_version}; dropping ${nix_system} from this release." >&2
+  fi
 done
+
+if [[ -z "${new_hashes[x86_64-linux]:-}" ]]; then
+  echo "error: no linux-amd64 asset for ${new_version}; aborting." >&2
+  exit 1
+fi
 
 echo "Writing pin.nix..."
 {
@@ -56,8 +66,11 @@ echo "Writing pin.nix..."
   echo "{"
   echo "  version = \"${new_version}\";"
   echo "  hashes = {"
+  # Stable platform order; emit only the platforms this release actually shipped.
   for nix_system in x86_64-linux aarch64-linux armv7l-linux x86_64-darwin aarch64-darwin; do
-    printf '    "%s" = "%s";\n' "${nix_system}" "${new_hashes[$nix_system]}"
+    if [[ -n "${new_hashes[$nix_system]:-}" ]]; then
+      printf '    "%s" = "%s";\n' "${nix_system}" "${new_hashes[$nix_system]}"
+    fi
   done
   echo "  };"
   echo "}"
